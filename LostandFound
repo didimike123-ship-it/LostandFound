@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>FindIt — Lost & Found</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#F0F4FA;
+  --white:#FFFFFF;
+  --surface:#F8FAFF;
+  --border:#E4E9F2;
+  --text:#1A1D2E;
+  --text2:#4A5068;
+  --muted:#8B93A8;
+  --blue:#3B6FE8;
+  --blue-soft:#EBF1FD;
+  --blue-mid:#C7D8FA;
+  --green:#16A34A;
+  --green-soft:#DCFCE7;
+  --red:#DC2626;
+  --red-soft:#FEE2E2;
+  --amber:#D97706;
+  --amber-soft:#FEF3C7;
+  --shadow-sm:0 1px 3px rgba(0,0,0,.07),0 1px 2px rgba(0,0,0,.05);
+  --shadow:0 4px 12px rgba(0,0,0,.08),0 1px 3px rgba(0,0,0,.05);
+  --shadow-lg:0 10px 30px rgba(0,0,0,.1),0 4px 8px rgba(0,0,0,.06);
+  --radius:12px;
+  --radius-sm:8px;
+}
+body{font-family:'Inter',sans-serif;background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column}
+h1,h2,h3,h4,.logo{font-family:'Plus Jakarta Sans',sans-serif}
+
+/* ── LAYOUT ── */
+.app{display:flex;min-height:100vh}
+.sidebar{
+  width:220px;flex-shrink:0;background:var(--white);
+  border-right:1px solid var(--border);
+  display:flex;flex-direction:column;
+  position:sticky;top:0;height:100vh;overflow-y:auto;
+}
+.sidebar-top{padding:1.5rem 1.25rem 1rem}
+.logo{font-size:1.25rem;font-weight:800;color:var(--blue);letter-spacing:-.5px}
+.logo span{color:var(--text)}
+.logo-sub{font-size:.7rem;color:var(--muted);font-family:'Inter',sans-serif;font-weight:400;margin-top:.15rem}
+.nav{padding:.5rem .75rem;flex:1}
+.nav-item{
+  display:flex;align-items:center;gap:.65rem;
+  width:100%;padding:.6rem .75rem;border-radius:var(--radius-sm);
+  background:none;border:none;cursor:pointer;
+  font-family:'Inter',sans-serif;font-size:.875rem;font-weight:500;
+  color:var(--text2);text-align:left;transition:all .15s;
+  margin-bottom:.15rem;
+}
+.nav-item:hover{background:var(--surface);color:var(--text)}
+.nav-item.active{background:var(--blue-soft);color:var(--blue);font-weight:600}
+.nav-icon{width:18px;text-align:center;font-size:1rem}
+.nav-divider{height:1px;background:var(--border);margin:.5rem 0}
+.content{flex:1;overflow-x:hidden}
+.topbar{
+  background:var(--white);border-bottom:1px solid var(--border);
+  padding:0 2rem;height:58px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:sticky;top:0;z-index:50;
+}
+.topbar-title{font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;color:var(--text)}
+.topbar-right{display:flex;gap:.5rem}
+.inner{padding:2rem}
+
+/* ── PAGES ── */
+.page{display:none;animation:fade .25s ease}
+.page.active{display:block}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── DASHBOARD ── */
+.section-title{font-size:1rem;font-weight:700;color:var(--text);margin-bottom:1rem}
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin-bottom:2rem}
+.stat{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);padding:1.25rem 1.4rem;
+  box-shadow:var(--shadow-sm);display:flex;align-items:center;gap:1rem;
+}
+.stat-icon{width:44px;height:44px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:1.25rem;flex-shrink:0}
+.stat.lost .stat-icon{background:var(--red-soft)}
+.stat.found .stat-icon{background:var(--green-soft)}
+.stat.recovered .stat-icon{background:var(--amber-soft)}
+.stat-info{}
+.stat-num{font-family:'Plus Jakarta Sans',sans-serif;font-size:1.75rem;font-weight:800;line-height:1}
+.stat.lost .stat-num{color:var(--red)}
+.stat.found .stat-num{color:var(--green)}
+.stat.recovered .stat-num{color:var(--amber)}
+.stat-lbl{font-size:.75rem;color:var(--muted);font-weight:500;margin-top:.2rem}
+
+/* ── ITEM CARDS ── */
+.items-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}
+.card{
+  background:var(--white);border:1px solid var(--border);
+  border-radius:var(--radius);overflow:hidden;cursor:pointer;
+  box-shadow:var(--shadow-sm);transition:box-shadow .2s,transform .2s;
+  border-left:4px solid transparent;
+}
+.card:hover{box-shadow:var(--shadow);transform:translateY(-2px)}
+.card.lost{border-left-color:var(--red)}
+.card.found{border-left-color:var(--green)}
+.card.recovered{border-left-color:var(--amber)}
+.card-thumb{
+  height:150px;background:var(--surface);
+  display:flex;align-items:center;justify-content:center;font-size:3rem;
+  overflow:hidden;
+}
+.card-thumb img{width:100%;height:100%;object-fit:cover}
+.card-body{padding:1rem}
+.card-top{display:flex;align-items:flex-start;justify-content:space-between;gap:.5rem;margin-bottom:.5rem}
+.card-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;font-size:.95rem;line-height:1.3}
+.badge{display:inline-flex;align-items:center;gap:.25rem;font-size:.7rem;font-weight:600;padding:.2rem .55rem;border-radius:20px;white-space:nowrap;flex-shrink:0}
+.badge.lost{background:var(--red-soft);color:var(--red)}
+.badge.found{background:var(--green-soft);color:var(--green)}
+.badge.recovered{background:var(--amber-soft);color:var(--amber)}
+.card-meta{display:flex;flex-direction:column;gap:.3rem;margin-top:.6rem}
+.meta-row{display:flex;align-items:center;gap:.4rem;font-size:.8rem;color:var(--text2)}
+.meta-row .icon{width:16px;text-align:center;font-size:.85rem;color:var(--muted)}
+.card-footer{margin-top:.75rem;padding-top:.75rem;border-top:1px solid var(--border);display:flex;align-items:center;justify-content:space-between}
+.cat-tag{display:inline-flex;align-items:center;gap:.3rem;font-size:.72rem;font-weight:600;color:var(--muted);background:var(--surface);border:1px solid var(--border);padding:.2rem .6rem;border-radius:20px}
+
+/* ── RECENT TABLE ── */
+.recent-list{display:flex;flex-direction:column;gap:.5rem}
+.recent-row{
+  background:var(--white);border:1px solid var(--border);border-radius:var(--radius-sm);
+  padding:.85rem 1rem;display:flex;align-items:center;gap:1rem;
+  cursor:pointer;transition:border-color .15s,box-shadow .15s;
+}
+.recent-row:hover{border-color:var(--blue-mid);box-shadow:var(--shadow-sm)}
+.recent-ico{width:36px;height:36px;border-radius:8px;background:var(--surface);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.recent-info{flex:1;min-width:0}
+.recent-name{font-family:'Plus Jakarta Sans',sans-serif;font-weight:600;font-size:.875rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.recent-sub{font-size:.75rem;color:var(--muted);margin-top:.1rem}
+.recent-right{display:flex;align-items:center;gap:.5rem;flex-shrink:0}
+
+/* ── SEARCH BAR ── */
+.search-row{display:flex;gap:.75rem;margin-bottom:1.25rem;flex-wrap:wrap}
+.input{
+  background:var(--white);border:1.5px solid var(--border);color:var(--text);
+  border-radius:var(--radius-sm);padding:.6rem .9rem;
+  font-family:'Inter',sans-serif;font-size:.875rem;outline:none;
+  transition:border-color .15s,box-shadow .15s;
+}
+.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(59,111,232,.1)}
+.input::placeholder{color:var(--muted)}
+.input-search{flex:1;min-width:180px}
+.input-select{cursor:pointer;min-width:150px;max-width:180px}
+
+/* ── PAGE HEADER ── */
+.page-head{display:flex;align-items:center;justify-content:space-between;margin-bottom:1.5rem;flex-wrap:wrap;gap:.75rem}
+.page-head h2{font-size:1.3rem;font-weight:800}
+
+/* ── BUTTONS ── */
+.btn{display:inline-flex;align-items:center;gap:.4rem;padding:.55rem 1.1rem;border-radius:var(--radius-sm);font-family:'Inter',sans-serif;font-size:.875rem;font-weight:600;cursor:pointer;border:none;transition:all .15s}
+.btn-primary{background:var(--blue);color:#fff}
+.btn-primary:hover{background:#2d5fd4}
+.btn-outline{background:var(--white);color:var(--text2);border:1.5px solid var(--border)}
+.btn-outline:hover{background:var(--surface);border-color:var(--blue-mid)}
+.btn-green{background:var(--green-soft);color:var(--green);border:1.5px solid #bbf7d0}
+.btn-green:hover{background:#bbf7d0}
+.btn-red{background:var(--red-soft);color:var(--red);border:1.5px solid #fecaca}
+.btn-red:hover{background:#fecaca}
+.btn-sm{padding:.4rem .8rem;font-size:.8rem}
+
+/* ── FORM ── */
+.form-wrap{max-width:580px}
+.form-card{background:var(--white);border:1px solid var(--border);border-radius:var(--radius);padding:1.75rem;box-shadow:var(--shadow-sm)}
+.type-tabs{display:grid;grid-template-columns:1fr 1fr;gap:.5rem;margin-bottom:1.5rem}
+.type-tab{padding:.75rem;border-radius:var(--radius-sm);border:1.5px solid var(--border);background:var(--surface);cursor:pointer;font-family:'Plus Jakarta Sans',sans-serif;font-size:.9rem;font-weight:600;color:var(--muted);transition:all .15s;text-align:center}
+.type-tab:hover{border-color:var(--blue-mid);color:var(--text)}
+.type-tab.active.is-lost{background:var(--red-soft);border-color:#fca5a5;color:var(--red)}
+.type-tab.active.is-found{background:var(--green-soft);border-color:#86efac;color:var(--green)}
+.field{margin-bottom:1.1rem}
+.field label{display:block;font-size:.78rem;font-weight:600;color:var(--text2);margin-bottom:.4rem;text-transform:uppercase;letter-spacing:.4px}
+.field .input,.field textarea,.field select{width:100%;display:block}
+.field textarea{min-height:85px;resize:vertical;line-height:1.5}
+.field input[type="file"]{padding:.45rem .6rem;cursor:pointer}
+.fields-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.req{color:var(--red)}
+.submit-btn{width:100%;padding:.8rem;border-radius:var(--radius-sm);background:var(--blue);color:#fff;border:none;font-family:'Plus Jakarta Sans',sans-serif;font-size:1rem;font-weight:700;cursor:pointer;margin-top:.25rem;transition:background .15s}
+.submit-btn:hover{background:#2d5fd4}
+
+/* ── MODAL ── */
+.overlay{position:fixed;inset:0;z-index:200;background:rgba(15,15,30,.45);backdrop-filter:blur(3px);display:flex;align-items:center;justify-content:center;padding:1rem}
+.modal{background:var(--white);border:1px solid var(--border);border-radius:16px;max-width:500px;width:100%;max-height:90vh;overflow-y:auto;box-shadow:var(--shadow-lg);animation:modalIn .22s ease}
+@keyframes modalIn{from{opacity:0;transform:scale(.96)}to{opacity:1;transform:scale(1)}}
+.modal-hdr{padding:1.25rem 1.5rem .75rem;display:flex;align-items:flex-start;justify-content:space-between;border-bottom:1px solid var(--border)}
+.modal-hdr h3{font-size:1.15rem;font-weight:800}
+.close-btn{background:var(--surface);border:1px solid var(--border);color:var(--muted);width:30px;height:30px;border-radius:6px;cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.close-btn:hover{background:var(--border);color:var(--text)}
+.modal-body{padding:1.25rem 1.5rem 1.5rem}
+.modal-img{width:100%;height:190px;border-radius:10px;background:var(--surface);border:1px solid var(--border);overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:4rem;margin-bottom:1.2rem}
+.modal-img img{width:100%;height:100%;object-fit:cover}
+.detail-table{display:flex;flex-direction:column;gap:.65rem;margin-bottom:1.2rem}
+.detail-row{display:flex;gap:.75rem}
+.d-label{font-size:.75rem;font-weight:600;color:var(--muted);text-transform:uppercase;letter-spacing:.4px;min-width:90px;padding-top:.1rem}
+.d-val{font-size:.875rem;color:var(--text);flex:1;line-height:1.5}
+.contact-box{background:var(--blue-soft);border:1.5px solid var(--blue-mid);border-radius:var(--radius-sm);padding:.85rem 1rem;margin-bottom:1.1rem}
+.contact-box .lbl{font-size:.72rem;font-weight:600;color:var(--blue);text-transform:uppercase;letter-spacing:.4px;margin-bottom:.25rem}
+.contact-box .val{font-size:.9rem;font-weight:600;color:var(--text)}
+.modal-actions{display:flex;gap:.6rem;flex-wrap:wrap}
+
+/* ── EMPTY STATE ── */
+.empty{text-align:center;padding:3.5rem 1rem;grid-column:1/-1}
+.empty-ico{font-size:2.5rem;margin-bottom:.75rem}
+.empty h3{font-size:1rem;font-weight:700;margin-bottom:.3rem}
+.empty p{font-size:.85rem;color:var(--muted)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:1.5rem;right:1.5rem;z-index:300;background:var(--text);color:#fff;border-radius:10px;padding:.75rem 1.1rem;font-size:.85rem;font-weight:500;display:flex;align-items:center;gap:.5rem;animation:toastIn .25s ease;box-shadow:var(--shadow-lg);max-width:280px}
+@keyframes toastIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+/* ── MOBILE NAV ── */
+.mobile-nav{display:none;background:var(--white);border-top:1px solid var(--border);position:fixed;bottom:0;left:0;right:0;z-index:100;padding:.4rem .5rem .6rem}
+.mobile-nav-inner{display:flex;justify-content:space-around}
+.mob-btn{display:flex;flex-direction:column;align-items:center;gap:.15rem;padding:.4rem .6rem;border-radius:8px;background:none;border:none;cursor:pointer;font-size:.65rem;font-weight:600;color:var(--muted);transition:color .15s}
+.mob-btn .m-ico{font-size:1.2rem}
+.mob-btn.active{color:var(--blue)}
+
+@media(max-width:768px){
+  .sidebar{display:none}
+  .mobile-nav{display:block}
+  .content{padding-bottom:70px}
+  .inner{padding:1.25rem 1rem}
+  .stats-row{grid-template-columns:1fr}
+  .fields-2{grid-template-columns:1fr}
+  .topbar{padding:0 1rem}
+}
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="sidebar-top">
+      <div class="logo">Find<span>It</span></div>
+      <div class="logo-sub">Lost &amp; Found System</div>
+    </div>
+    <nav class="nav">
+      <button class="nav-item active" onclick="showPage('dashboard')"><span class="nav-icon">🏠</span> Dashboard</button>
+      <button class="nav-item" onclick="showPage('lost')"><span class="nav-icon">🔴</span> Lost Items</button>
+      <button class="nav-item" onclick="showPage('found')"><span class="nav-icon">🟢</span> Found Items</button>
+      <div class="nav-divider"></div>
+      <button class="nav-item" onclick="showPage('report')"><span class="nav-icon">✏️</span> Report Item</button>
+    </nav>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <div class="content">
+    <div class="topbar">
+      <span class="topbar-title" id="topbar-title">Dashboard</span>
+      <div class="topbar-right">
+        <button class="btn btn-primary btn-sm" onclick="showPage('report')">+ Report Item</button>
+      </div>
+    </div>
+
+    <div class="inner">
+
+      <!-- DASHBOARD -->
+      <div class="page active" id="page-dashboard">
+        <div class="stats-row">
+          <div class="stat lost">
+            <div class="stat-icon">📦</div>
+            <div class="stat-info">
+              <div class="stat-num" id="s-lost">0</div>
+              <div class="stat-lbl">Lost Items</div>
+            </div>
+          </div>
+          <div class="stat found">
+            <div class="stat-icon">🔍</div>
+            <div class="stat-info">
+              <div class="stat-num" id="s-found">0</div>
+              <div class="stat-lbl">Found Items</div>
+            </div>
+          </div>
+          <div class="stat recovered">
+            <div class="stat-icon">✅</div>
+            <div class="stat-info">
+              <div class="stat-num" id="s-recovered">0</div>
+              <div class="stat-lbl">Recovered</div>
+            </div>
+          </div>
+        </div>
+        <div class="section-title">Recent Activity</div>
+        <div class="recent-list" id="recent-list"></div>
+      </div>
+
+      <!-- LOST -->
+      <div class="page" id="page-lost">
+        <div class="page-head">
+          <h2>Lost Items</h2>
+          <button class="btn btn-primary" onclick="showPage('report');setType('lost')">+ Report Lost</button>
+        </div>
+        <div class="search-row">
+          <input class="input input-search" type="text" placeholder="Search items…" id="lost-q" oninput="renderGrid('lost')"/>
+          <select class="input input-select" id="lost-cat" onchange="renderGrid('lost')">
+            <option value="">All Categories</option>
+            <option>Phone</option><option>Wallet</option><option>Keys</option>
+            <option>ID Card</option><option>Books</option><option>Others</option>
+          </select>
+        </div>
+        <div class="items-grid" id="grid-lost"></div>
+      </div>
+
+      <!-- FOUND -->
+      <div class="page" id="page-found">
+        <div class="page-head">
+          <h2>Found Items</h2>
+          <button class="btn btn-primary" onclick="showPage('report');setType('found')">+ Report Found</button>
+        </div>
+        <div class="search-row">
+          <input class="input input-search" type="text" placeholder="Search items…" id="found-q" oninput="renderGrid('found')"/>
+          <select class="input input-select" id="found-cat" onchange="renderGrid('found')">
+            <option value="">All Categories</option>
+            <option>Phone</option><option>Wallet</option><option>Keys</option>
+            <option>ID Card</option><option>Books</option><option>Others</option>
+          </select>
+        </div>
+        <div class="items-grid" id="grid-found"></div>
+      </div>
+
+      <!-- REPORT -->
+      <div class="page" id="page-report">
+        <div class="page-head"><h2>Report an Item</h2></div>
+        <div class="form-wrap">
+          <div class="form-card">
+            <div class="type-tabs">
+              <button class="type-tab active is-lost" id="tab-lost" onclick="setType('lost')">🔴 I Lost Something</button>
+              <button class="type-tab is-found" id="tab-found" onclick="setType('found')">🟢 I Found Something</button>
+            </div>
+            <div class="field">
+              <label>Item Name <span class="req">*</span></label>
+              <input class="input" type="text" id="f-name" placeholder="e.g. Black Samsung Galaxy S24"/>
+            </div>
+            <div class="fields-2">
+              <div class="field">
+                <label>Category <span class="req">*</span></label>
+                <select class="input" id="f-cat">
+                  <option value="">Select category…</option>
+                  <option>Phone</option><option>Wallet</option><option>Keys</option>
+                  <option>ID Card</option><option>Books</option><option>Others</option>
+                </select>
+              </div>
+              <div class="field">
+                <label id="lbl-date">Date Lost <span class="req">*</span></label>
+                <input class="input" type="date" id="f-date"/>
+              </div>
+            </div>
+            <div class="field">
+              <label id="lbl-loc">Location Lost <span class="req">*</span></label>
+              <input class="input" type="text" id="f-loc" placeholder="e.g. Library 2nd Floor, Cafeteria"/>
+            </div>
+            <div class="field">
+              <label>Description</label>
+              <textarea class="input" id="f-desc" placeholder="Color, brand, distinguishing marks…"></textarea>
+            </div>
+            <div class="field">
+              <label>Contact Info <span class="req">*</span></label>
+              <input class="input" type="text" id="f-contact" placeholder="Phone number or email address"/>
+            </div>
+            <div class="field">
+              <label>Photo <span style="color:var(--muted);font-weight:400;text-transform:none;letter-spacing:0">(optional)</span></label>
+              <input class="input" type="file" id="f-photo" accept="image/*"/>
+            </div>
+            <button class="submit-btn" onclick="submitItem()">Submit Report</button>
+          </div>
+        </div>
+      </div>
+
+    </div><!-- /inner -->
+  </div><!-- /content -->
+</div><!-- /app -->
+
+<!-- MOBILE NAV -->
+<div class="mobile-nav">
+  <div class="mobile-nav-inner">
+    <button class="mob-btn active" id="mob-dashboard" onclick="showPage('dashboard')"><span class="m-ico">🏠</span>Home</button>
+    <button class="mob-btn" id="mob-lost" onclick="showPage('lost')"><span class="m-ico">🔴</span>Lost</button>
+    <button class="mob-btn" id="mob-found" onclick="showPage('found')"><span class="m-ico">🟢</span>Found</button>
+    <button class="mob-btn" id="mob-report" onclick="showPage('report')"><span class="m-ico">✏️</span>Report</button>
+  </div>
+</div>
+
+<!-- MODAL -->
+<div class="overlay" id="overlay" style="display:none" onclick="closeOuter(event)">
+  <div class="modal">
+    <div class="modal-hdr">
+      <h3 id="m-name"></h3>
+      <button class="close-btn" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-img" id="m-img"></div>
+      <div class="detail-table" id="m-details"></div>
+      <div class="contact-box" id="m-contact"></div>
+      <div class="modal-actions" id="m-actions"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const ICONS={Phone:'📱',Wallet:'👜',Keys:'🔑','ID Card':'🪪',Books:'📚',Others:'📦','':'📦'};
+let items=JSON.parse(localStorage.getItem('findit2')||'[]');
+let curType='lost';
+
+function save(){localStorage.setItem('findit2',JSON.stringify(items))}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;')}
+
+// ── NAV ──────────────────────────────────────────────────────────────────────
+const PAGE_TITLES={dashboard:'Dashboard',lost:'Lost Items',found:'Found Items',report:'Report an Item'};
+function showPage(name){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mob-btn').forEach(b=>b.classList.remove('active'));
+  document.getElementById('page-'+name).classList.add('active');
+  document.getElementById('topbar-title').textContent=PAGE_TITLES[name]||'';
+  // sidebar
+  const sideMap={dashboard:0,lost:1,found:2,report:4};
+  const navItems=document.querySelectorAll('.nav-item');
+  if(sideMap[name]!==undefined && navItems[sideMap[name]]) navItems[sideMap[name]].classList.add('active');
+  // mobile
+  const mob=document.getElementById('mob-'+name);
+  if(mob) mob.classList.add('active');
+  if(name==='dashboard') renderDashboard();
+  if(name==='lost') renderGrid('lost');
+  if(name==='found') renderGrid('found');
+}
+
+// ── FORM ─────────────────────────────────────────────────────────────────────
+function setType(t){
+  curType=t;
+  document.getElementById('tab-lost').className='type-tab'+(t==='lost'?' active is-lost':'');
+  document.getElementById('tab-found').className='type-tab'+(t==='found'?' active is-found':'');
+  document.getElementById('lbl-date').innerHTML=(t==='lost'?'Date Lost':'Date Found')+' <span class="req">*</span>';
+  document.getElementById('lbl-loc').innerHTML=(t==='lost'?'Location Lost':'Location Found')+' <span class="req">*</span>';
+  document.getElementById('f-loc').placeholder=t==='lost'?'e.g. Library 2nd Floor':'e.g. Cafeteria entrance';
+}
+
+function submitItem(){
+  const name=document.getElementById('f-name').value.trim();
+  const cat=document.getElementById('f-cat').value;
+  const date=document.getElementById('f-date').value;
+  const loc=document.getElementById('f-loc').value.trim();
+  const desc=document.getElementById('f-desc').value.trim();
+  const contact=document.getElementById('f-contact').value.trim();
+  const file=document.getElementById('f-photo').files[0];
+  if(!name||!cat||!date||!loc||!contact){toast('⚠️ Please fill in all required fields');return}
+  const go=photo=>{
+    items.unshift({id:Date.now()+'',type:curType,name,cat,date,loc,desc,contact,photo:photo||'',status:'active',created:new Date().toISOString()});
+    save();
+    ['f-name','f-date','f-loc','f-desc','f-contact'].forEach(id=>document.getElementById(id).value='');
+    document.getElementById('f-cat').value='';
+    document.getElementById('f-photo').value='';
+    toast('✅ Item reported successfully!');
+    showPage(curType);
+  };
+  if(file){const r=new FileReader();r.onload=e=>go(e.target.result);r.readAsDataURL(file)}else go('');
+}
+
+// ── RENDER GRID ───────────────────────────────────────────────────────────────
+function renderGrid(type){
+  const q=(document.getElementById(type+'-q').value||'').toLowerCase();
+  const cat=document.getElementById(type+'-cat').value;
+  const list=items.filter(i=>i.type===type&&i.name.toLowerCase().includes(q)&&(!cat||i.cat===cat));
+  const grid=document.getElementById('grid-'+type);
+  if(!list.length){
+    grid.innerHTML=`<div class="empty"><div class="empty-ico">🔎</div><h3>No items found</h3><p>Try a different keyword or category.</p></div>`;
+    return;
+  }
+  grid.innerHTML=list.map(i=>{
+    const cls=i.status==='recovered'?'recovered':i.type;
+    const lbl=i.status==='recovered'?'✓ Recovered':i.type==='lost'?'Lost':'Found';
+    return`<div class="card ${cls}" onclick="openModal('${i.id}')">
+      <div class="card-thumb">${i.photo?`<img src="${esc(i.photo)}" alt=""/>`:(ICONS[i.cat]||'📦')}</div>
+      <div class="card-body">
+        <div class="card-top"><div class="card-name">${esc(i.name)}</div><span class="badge ${cls}">${lbl}</span></div>
+        <div class="card-meta">
+          <div class="meta-row"><span class="icon">📅</span>${i.date}</div>
+          <div class="meta-row"><span class="icon">📍</span>${esc(i.loc)}</div>
+        </div>
+        <div class="card-footer"><span class="cat-tag">${ICONS[i.cat]||'📦'} ${i.cat}</span></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── DASHBOARD ────────────────────────────────────────────────────────────────
+function renderDashboard(){
+  document.getElementById('s-lost').textContent=items.filter(i=>i.type==='lost'&&i.status!=='recovered').length;
+  document.getElementById('s-found').textContent=items.filter(i=>i.type==='found'&&i.status!=='recovered').length;
+  document.getElementById('s-recovered').textContent=items.filter(i=>i.status==='recovered').length;
+  const recent=items.slice(0,10);
+  const el=document.getElementById('recent-list');
+  if(!recent.length){
+    el.innerHTML=`<div class="empty"><div class="empty-ico">📋</div><h3>No activity yet</h3><p>Report a lost or found item to get started.</p></div>`;
+    return;
+  }
+  el.innerHTML=recent.map(i=>{
+    const cls=i.status==='recovered'?'recovered':i.type;
+    const lbl=i.status==='recovered'?'✓ Recovered':i.type==='lost'?'Lost':'Found';
+    return`<div class="recent-row" onclick="openModal('${i.id}')">
+      <div class="recent-ico">${ICONS[i.cat]||'📦'}</div>
+      <div class="recent-info">
+        <div class="recent-name">${esc(i.name)}</div>
+        <div class="recent-sub">📍 ${esc(i.loc)} &nbsp;·&nbsp; 📅 ${i.date}</div>
+      </div>
+      <div class="recent-right">
+        <span class="badge ${cls}">${lbl}</span>
+        <span class="cat-tag">${i.cat}</span>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+// ── MODAL ────────────────────────────────────────────────────────────────────
+function openModal(id){
+  const i=items.find(x=>x.id===id);
+  if(!i) return;
+  window._mid=id;
+  document.getElementById('m-name').textContent=i.name;
+  const img=document.getElementById('m-img');
+  img.innerHTML=i.photo?`<img src="${esc(i.photo)}" alt=""/>`:(ICONS[i.cat]||'📦');
+  const cls=i.status==='recovered'?'recovered':i.type;
+  const lbl=i.status==='recovered'?'✓ Recovered':i.type==='lost'?'🔴 Lost':'🟢 Found';
+  document.getElementById('m-details').innerHTML=`
+    <div class="detail-row"><span class="d-label">Status</span><span class="d-val"><span class="badge ${cls}">${lbl}</span></span></div>
+    <div class="detail-row"><span class="d-label">Category</span><span class="d-val">${ICONS[i.cat]||'📦'} ${i.cat}</span></div>
+    <div class="detail-row"><span class="d-label">${i.type==='lost'?'Date Lost':'Date Found'}</span><span class="d-val">${i.date}</span></div>
+    <div class="detail-row"><span class="d-label">Location</span><span class="d-val">${esc(i.loc)}</span></div>
+    ${i.desc?`<div class="detail-row"><span class="d-label">Description</span><span class="d-val">${esc(i.desc)}</span></div>`:''}
+  `;
+  document.getElementById('m-contact').innerHTML=`
+    <div class="lbl">${i.type==='lost'?'Owner Contact':'Finder Contact'}</div>
+    <div class="val">📞 ${esc(i.contact)}</div>
+  `;
+  const acts=document.getElementById('m-actions');
+  acts.innerHTML='';
+  if(i.status!=='recovered'){
+    const b=document.createElement('button');
+    b.className='btn btn-green';b.textContent='✅ Mark as Recovered';
+    b.onclick=()=>markRec(id);acts.appendChild(b);
+  }
+  const d=document.createElement('button');
+  d.className='btn btn-red';d.textContent='🗑 Delete';
+  d.onclick=()=>delItem(id);acts.appendChild(d);
+  document.getElementById('overlay').style.display='flex';
+}
+function closeModal(){document.getElementById('overlay').style.display='none'}
+function closeOuter(e){if(e.target.id==='overlay')closeModal()}
+function markRec(id){
+  const i=items.find(x=>x.id===id);if(i){i.status='recovered';save();}
+  closeModal();toast('🎉 Marked as recovered!');
+  renderDashboard();renderGrid('lost');renderGrid('found');
+}
+function delItem(id){
+  if(!confirm('Delete this item?'))return;
+  items=items.filter(x=>x.id!==id);save();
+  closeModal();toast('Deleted.');
+  renderDashboard();renderGrid('lost');renderGrid('found');
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);setTimeout(()=>t.remove(),3000);
+}
+
+// ── SEED DATA ────────────────────────────────────────────────────────────────
+if(!items.length){
+  items=[
+    {id:'d1',type:'lost',name:'Black iPhone 14',cat:'Phone',date:'2025-06-01',loc:'Library 2nd Floor',desc:'Black phone, cracked back glass, blue case sticker',contact:'09123456789',photo:'',status:'active',created:new Date().toISOString()},
+    {id:'d2',type:'found',name:'Blue Leather Wallet',cat:'Wallet',date:'2025-06-02',loc:'Cafeteria entrance',desc:'Blue wallet with some cash and cards inside',contact:'09987654321',photo:'',status:'active',created:new Date().toISOString()},
+    {id:'d3',type:'lost',name:'Student ID Card',cat:'ID Card',date:'2025-06-03',loc:'Gym entrance',desc:'2nd year student ID, name visible on front',contact:'student@example.com',photo:'',status:'recovered',created:new Date().toISOString()},
+    {id:'d4',type:'found',name:'Key Bunch (3 keys)',cat:'Keys',date:'2025-06-04',loc:'Parking Lot B',desc:'3 keys on a red keyring, found near lot entrance',contact:'09111222333',photo:'',status:'active',created:new Date().toISOString()},
+    {id:'d5',type:'lost',name:'Calculus Textbook',cat:'Books',date:'2025-06-05',loc:'Room 204, Building A',desc:'Yellow cover, name written inside front cover',contact:'09444555666',photo:'',status:'active',created:new Date().toISOString()},
+  ];
+  save();
+}
+renderDashboard();
+</script>
+</body>
+</html>
